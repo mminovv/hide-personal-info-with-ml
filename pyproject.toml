@@ -8,7 +8,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
+python = ">=3.9,<3.12"
 halo = "^0.0.31"
 numpy = "^1.24.2"
 spacy = "^3.5.1"
