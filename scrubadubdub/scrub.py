@@ -5,23 +5,27 @@ from typing import Union
 import spacy
 
 # Load Spacy NLP model
-nlp = spacy.load("en_core_web_trf")
+nlp = spacy.load("ru_core_news_lg")
 
 
 class Scrub:
     def __init__(self):
         self.patterns = {
             "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
-            "phone": r"\b\(?\d{3}\)?[-\s]?\d{3}[-\s]?\d{4}\b",
-            "ssn": r"\b\d{3}[-]?\d{2}[-]?\d{4}\b",
-            "ip_address_v4": r"\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b",
-            "ip_address_v6": r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b",
-            "hostname": r"\b(?:(?:[a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*((?:[A-Za-z]|(?:[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9]))\.(?:[a-zA-Z]{2,})|(?:xn--[A-Za-z0-9]+))\b",
-            "uuid": r"\b(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}\b",
+            "phone": r"\b\+\d{1,3}\s*\(\d{2,3}\)\s*\d{3}-\d{2}-\d{2}\b",
+            "passport": r"\b[A-ZА-Я]{2}\d{6}\b",
+            "credit_card": r"\b\d{4}\s*\d{4}\s*\d{4}\s*\d{4}\b",
+            "inn": r"\b\d{3}\s*\d{2}\s*\d{3}\s*\d{2}\s*\d{2}\.?\d?\b",
+            "date": r"\d{2}\.\d{2}\.\d{4}",
+            "id_number": r"\b(I|ID)\s*\d+\b",
+            "address": r"\b[A-ZА-ЯЁ][a-zа-яё]+\s*\d+\s*[A-ZА-ЯЁ][a-zа-яё]+\s*\d+\b",
+            "number": r"\b\d+\b",
+            "bank_account": r"\b\d{16,19}\b",
         }
 
     def scrub_text(self, text: str) -> str:
         scrubbed_text = text
+        scrubbed_text = self.scrub_pii_with_nlp(scrubbed_text)
         for category, pattern in self.patterns.items():
             if category == "phone":
                 matches = re.finditer(pattern, scrubbed_text)
@@ -34,7 +38,6 @@ class Scrub:
             else:
                 scrubbed_text = re.sub(pattern, "[Скрыто]", scrubbed_text)
 
-        scrubbed_text = self.scrub_pii_with_nlp(scrubbed_text)
         return scrubbed_text
 
     def scrub_pii_with_nlp(self, text: str) -> str:
@@ -42,8 +45,14 @@ class Scrub:
         final_text = text
 
         for name in nlp_doc.ents:
-            if name.label_ == "PERSON":
+            print(name.text, name.label_)
+            if name.label_ == "PER":
                 final_text = re.sub(re.escape(name.text), "[Скрыто]", final_text)
+            if name.label_ == "LOC":
+                final_text = re.sub(re.escape(name.text), "[Скрыто]", final_text)
+            if name.label_ == "ORG":
+                final_text = re.sub(re.escape(name.text), "[Скрыто]", final_text)
+
         return final_text
 
     def scrub(
