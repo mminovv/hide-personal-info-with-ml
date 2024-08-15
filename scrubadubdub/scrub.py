@@ -30,9 +30,9 @@ class Scrub:
 
                     # Remove parentheses from matched phone numbers
                     matched_phone = re.sub(r"^\((\d{3})\)$", r"\1", matched_phone)
-                    scrubbed_text = scrubbed_text.replace(matched_phone, "[REDACTED]")
+                    scrubbed_text = scrubbed_text.replace(matched_phone, "[Скрыто]")
             else:
-                scrubbed_text = re.sub(pattern, "[REDACTED]", scrubbed_text)
+                scrubbed_text = re.sub(pattern, "[Скрыто]", scrubbed_text)
 
         scrubbed_text = self.scrub_pii_with_nlp(scrubbed_text)
         return scrubbed_text
@@ -43,7 +43,7 @@ class Scrub:
 
         for name in nlp_doc.ents:
             if name.label_ == "PERSON":
-                final_text = re.sub(re.escape(name.text), "[REDACTED]", final_text)
+                final_text = re.sub(re.escape(name.text), "[Скрыто]", final_text)
         return final_text
 
     def scrub(
